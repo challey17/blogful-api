@@ -7,6 +7,7 @@ const { NODE_ENV } = require("./config");
 const ArticlesService = require("./articles-service");
 
 const app = express();
+const jsonParser = express.json();
 //set up env variables for local and heroku
 const morganOption = NODE_ENV === "production" ? "tiny" : "common";
 app.use(morgan(morganOption));
@@ -18,6 +19,16 @@ app.get("/articles", (req, res, next) => {
   ArticlesService.getAllArticles(knexInstance)
     .then((articles) => {
       res.json(articles);
+    })
+    .catch(next);
+});
+
+app.post("/articles", jsonParser, (req, res, next) => {
+  const { title, content, style } = req.body;
+  const newArticle = { title, content, style };
+  ArticlesService.insertArticle(req.app.get("db"), newArticle)
+    .then((article) => {
+      res.status(201).location(`/articles/${article.id}`).json(article);
     })
     .catch(next);
 });
